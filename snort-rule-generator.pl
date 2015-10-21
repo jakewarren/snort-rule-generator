@@ -22,6 +22,7 @@ generateDNSQueryRule($value) if $type eq "dns-query";
 generateDNSReplyIPRule($value) if $type eq "dns-reply";
 generateHTTPReqRule($value) if $type eq "http-req-domain";
 generateHTTPFileNameRule($value) if $type eq "http-file-name";
+generateSSLCertCommonNameRule($value) if $type eq "ssl-cert-common-name";
 
 sub generateHTTPReqRule()
 {
@@ -104,6 +105,21 @@ sub generateDNSReplyIPRule
 
 }
 
+sub generateSSLCertCommonNameRule
+{
+    my $field = shift;
+
+    print 'alert tcp $EXTERNAL_NET 443 -> $HOME_NET any (msg:"SSL Cert - '.$field.'"; content:"|16|"; content:"|0b|"; distance:2; within:8; content:"|55 04 03|"; distance:0; content:"';
+    my $length = length($field);
+    print "|". sprintf("%02x",$length). "|$field";
+
+
+    print '"; distance:1; within:'.($length+1).'; classtype:trojan-activity; sid:xxxx; rev:1;)';
+    print "\n";
+
+    
+}
+
 
 sub usage()
 {
@@ -120,6 +136,7 @@ sub usage()
     print "\tdns-reply | match a dns reply containing a specified IP/CIDR\n";
     print "\thttp-req-domain | http request for a specific domain\n";
     print "\thttp-file-name | http request for a specific file name\n";
+    print "\tssl-cert-common-name | download of SSL cert with specific CN (common name) field value\n";
     print "--value => required parameter, contains the key value you want to generate the signature for.\n";
     print "--help => print usage information\n";
 }
